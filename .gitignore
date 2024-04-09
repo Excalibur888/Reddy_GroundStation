@@ -1,0 +1,9 @@
+Core/Startup/
+Drivers/
+Middlewares/
+Debug/
+*.launch
+*.ld
+
+.*
+!/.gitignore
