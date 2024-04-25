@@ -26,11 +26,10 @@ bw = LoRa.BW_125000
 cr = LoRa.CR_4_6
 ldro = LoRa.LDRO_OFF
 
-preambleLength = 0x08
-
+preambleLength = 0x10
 headerType = LoRa.HEADER_EXPLICIT
 payloadLength = 0x02
-crcType = LoRa.CRC_ON
+crcType = LoRa.CRC_OFF
 invertIq = LoRa.IQ_STANDARD
 
 sw = [0x88, 0x88]
@@ -71,6 +70,7 @@ def settingFunction() :
     # Set frequency to selected frequency (rfFrequency = rfFreq * 32000000 / 2 ^ 25)
     print(f"Set frequency to {rfFrequency/1000000} Mhz")
     rfFreq = int(rfFrequency * 33554432 / 32000000)
+    print(f"SFQ={rfFreq}")
     LoRa.setRfFrequency(rfFreq)
 
     # Set rx gain to selected gain
@@ -90,7 +90,6 @@ def settingFunction() :
     # Set predefined syncronize word
     print("Set syncWord to 0x{0:02X}{1:02X}".format(sw[0], sw[1]))
     LoRa.writeRegister(LoRa.REG_LORA_SYNC_WORD_MSB, sw, 2)
-    print(f"Status = {LoRa.getStatus()&0xE}")
 
 def receiveFunction(message: list, timeout: int) -> int :
 
@@ -120,8 +119,12 @@ def receiveFunction(message: list, timeout: int) -> int :
     print("Wait for RX done interrupt")
     global received
     while not received :
-#        print(f"Mode : {LoRa.getStatus()&0x70}")
-#        print(f"Status : {LoRa.getStatus()&0x0E}")
+        print(f"Mode : {LoRa.getMode()>>4}")
+        print(f"Status : {LoRa.getStatus()&0x0E}")
+        print(f"IRQStatus : {LoRa.getIrqStatus()}")
+        print(f"Errors : {LoRa.getError()}")
+        print("")
+#        print(f"Status : {LoRa.getStatus()}")
 #        payloadLengthRx = 0; rxStartBufferPointer = 0
 #        (payloadLengthRx, rxStartBufferPointer) = LoRa.getRxBufferStatus()
 #        buffer = LoRa.readBuffer(rxStartBufferPointer, payloadLengthRx)
@@ -177,6 +180,11 @@ while True :
     # Receive message
     message = []
     timeout = 0                  # ms timeout (0 = continuous)
+    print(f"Mode : {LoRa.getMode()>>4}")
+    print(f"Status : {LoRa.getStatus()&0x0E}")
+    print(f"IRQStatus : {LoRa.getIrqStatus()}")
+    print(f"Errors : {LoRa.getError()}")
+
     status = receiveFunction(message, timeout)
 
     # Display message if receive success or display status if error
