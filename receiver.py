@@ -30,13 +30,13 @@ LoRa.setFrequency(915000000)
 
 # Set RX gain to power saving gain
 print("Set RX gain to power saving gain")
-LoRa.setRxGain(LoRa.RX_GAIN_POWER_SAVING)
+LoRa.setRxGain(LoRa.RX_GAIN_BOOSTED)
 
 # Configure modulation parameter including spreading factor (SF), bandwidth (BW), and coding rate (CR)
 print("Set modulation parameters:\n\tSpreading factor = 7\n\tBandwidth = 125 kHz\n\tCoding rate = 4/5")
-sf = 12
+sf = 7
 bw = 125000
-cr = 6
+cr = 5
 ldro = False
 LoRa.setLoRaModulation(sf, bw, cr, ldro)
 
@@ -44,7 +44,7 @@ LoRa.setLoRaModulation(sf, bw, cr, ldro)
 print("Set packet parameters:\n\tExplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
 headerType = LoRa.HEADER_EXPLICIT
 preambleLength = 0x10
-payloadLength = 0x02
+payloadLength = 0x32
 crcType = False
 invertIq = False
 LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType, invertIq)
@@ -66,7 +66,6 @@ while True :
 
         # Put received packet to message and counter variable
         message = ""
-        print(f"SIZE = {LoRa.available()}")
         while LoRa.available() > 0 :
             message += str(LoRa.read()) + " "
 
