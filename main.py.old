@@ -9,11 +9,11 @@ spi = LoRaSpi(0, 0)
 cs = LoRaGpio(0, 8)
 reset = LoRaGpio(0, 22)
 busy = LoRaGpio(0, 23)
-irq = LoRaGpio(0, 24)
-txen = LoRaGpio(0, 12)
-rxen = LoRaGpio(0, 6)
+irq = LoRaGpio(0, 5)
+txen = LoRaGpio(0, 1)
+rxen = LoRaGpio(0, 0)
 
-LoRa = SX126x(spi, cs, reset, busy, irq, txen, rxen)
+LoRa = SX126x(spi, cs, reset, busy, irq)
 
 dio3Voltage = LoRa.DIO3_OUTPUT_1_8
 tcxoDelay = LoRa.TCXO_DELAY_10
@@ -106,8 +106,8 @@ def receiveFunction(message: list, timeout: int) -> int :
 
     # Set rxen and txen pin state for receiving packet
     if txen != None and rxen != None :
-        txen.output(LoRaGpio.HIGH)
-        rxen.output(LoRaGpio.LOW)
+        txen.output(LoRaGpio.LOW)
+        rxen.output(LoRaGpio.HIGH)
 
     # Calculate timeout (timeout duration = timeout * 15.625 us)
     tOut = timeout * 64
@@ -119,10 +119,21 @@ def receiveFunction(message: list, timeout: int) -> int :
     print("Wait for RX done interrupt")
     global received
     while not received :
-        print(f"Mode : {LoRa.getMode()>>4}")
-        print(f"Status : {LoRa.getStatus()&0x0E}")
-        print(f"IRQStatus : {LoRa.getIrqStatus()}")
-#        pass
+#        print(f"Mode : {LoRa.getMode()>>4}")
+#        print(f"Status : {LoRa.getStatus()&0x0E}")
+#        print(f"IRQStatus : {LoRa.getIrqStatus()}")
+#        print(f"Errors : {LoRa.getError()}")
+#        print(f"PacketStatus : {LoRa._readBytes(0x14, 4)}")
+#        print("")
+#        payloadLengthRx = 0; rxStartBufferPointer = 0
+#        (payloadLengthRx, rxStartBufferPointer) = LoRa.getRxBufferStatus()
+#        buffer = LoRa.readBuffer(rxStartBufferPointer, payloadLengthRx)
+#        for buf in buffer : message.append(buf)
+#        print(f"Message in bytes : {buffer}")
+#        messageString = ""
+#        for i in range(len(message)) : messageString += chr(message[i])
+#        print(f"Message: \'{messageString}\'")
+        pass
     monitoring.join()
     # Clear transmit interrupt flag
     received = False
@@ -168,7 +179,7 @@ while True :
 
     # Receive message
     message = []
-    timeout = 000                  # ms timeout (0 = continuous)
+    timeout = 1000                  # ms timeout (0 = continuous)
     print(f"Mode : {LoRa.getMode()>>4}")
     print(f"Status : {LoRa.getStatus()&0x0E}")
     print(f"IRQStatus : {LoRa.getIrqStatus()}")

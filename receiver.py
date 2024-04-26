@@ -10,8 +10,12 @@ spi = LoRaSpi(0, 0)
 cs = LoRaGpio(0, 8)
 reset = LoRaGpio(0, 22)
 busy = LoRaGpio(0, 23)
-irq = LoRaGpio(0, 5)
-LoRa = SX126x(spi, cs, reset, busy, irq)
+irq = LoRaGpio(0, 24)
+txen = LoRaGpio(0, 12)
+rxen = LoRaGpio(0, 6)
+
+LoRa = SX126x(spi, cs, reset, busy, irq, txen, rxen)
+
 print("Begin LoRa radio")
 if not LoRa.begin() :
     raise Exception("Something wrong, can't begin LoRa radio")
@@ -32,16 +36,18 @@ LoRa.setRxGain(LoRa.RX_GAIN_POWER_SAVING)
 print("Set modulation parameters:\n\tSpreading factor = 7\n\tBandwidth = 125 kHz\n\tCoding rate = 4/5")
 sf = 12
 bw = 125000
-cr = 4
-LoRa.setLoRaModulation(sf, bw, cr)
+cr = 6
+ldro = False
+LoRa.setLoRaModulation(sf, bw, cr, ldro)
 
 # Configure packet parameter including header type, preamble length, payload length, and CRC type
 print("Set packet parameters:\n\tExplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
 headerType = LoRa.HEADER_EXPLICIT
-preambleLength = 16
-payloadLength = 2
+preambleLength = 0x10
+payloadLength = 0x02
 crcType = False
-LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType)
+invertIq = False
+LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType, invertIq)
 
 # Set syncronize word for public network (0x3444)
 print("Set syncronize word to 0x8888")
@@ -60,12 +66,12 @@ while True :
 
         # Put received packet to message and counter variable
         message = ""
-        while LoRa.available() > 1 :
-            message += chr(LoRa.read())
-        counter = LoRa.read()
+        print(f"SIZE = {LoRa.available()}")
+        while LoRa.available() > 0 :
+            message += str(LoRa.read()) + " "
 
         # Print received message and counter in serial
-        print(f"{message}  {counter}")
+        print(f"{message}")
 
         # Print packet/signal status including RSSI, SNR, and signalRSSI
         print("Packet status: RSSI = {0:0.2f} dBm | SNR = {1:0.2f} dB".format(LoRa.packetRssi(), LoRa.snr()))
