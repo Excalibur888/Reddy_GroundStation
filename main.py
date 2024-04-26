@@ -13,7 +13,7 @@ irq = LoRaGpio(0, 5)
 txen = LoRaGpio(0, 1)
 rxen = LoRaGpio(0, 0)
 
-LoRa = SX126x(spi, cs, reset, busy)
+LoRa = SX126x(spi, cs, reset, busy, irq)
 
 dio3Voltage = LoRa.DIO3_OUTPUT_1_8
 tcxoDelay = LoRa.TCXO_DELAY_10
@@ -119,12 +119,12 @@ def receiveFunction(message: list, timeout: int) -> int :
     print("Wait for RX done interrupt")
     global received
     while not received :
-        print(f"Mode : {LoRa.getMode()>>4}")
-        print(f"Status : {LoRa.getStatus()&0x0E}")
-        print(f"IRQStatus : {LoRa.getIrqStatus()}")
-        print(f"Errors : {LoRa.getError()}")
-        print("")
-#        print(f"Status : {LoRa.getStatus()}")
+#        print(f"Mode : {LoRa.getMode()>>4}")
+#        print(f"Status : {LoRa.getStatus()&0x0E}")
+#        print(f"IRQStatus : {LoRa.getIrqStatus()}")
+#        print(f"Errors : {LoRa.getError()}")
+#        print(f"PacketStatus : {LoRa._readBytes(0x14, 4)}")
+#        print("")
 #        payloadLengthRx = 0; rxStartBufferPointer = 0
 #        (payloadLengthRx, rxStartBufferPointer) = LoRa.getRxBufferStatus()
 #        buffer = LoRa.readBuffer(rxStartBufferPointer, payloadLengthRx)
@@ -179,7 +179,7 @@ while True :
 
     # Receive message
     message = []
-    timeout = 0                  # ms timeout (0 = continuous)
+    timeout = 1000                  # ms timeout (0 = continuous)
     print(f"Mode : {LoRa.getMode()>>4}")
     print(f"Status : {LoRa.getStatus()&0x0E}")
     print(f"IRQStatus : {LoRa.getIrqStatus()}")

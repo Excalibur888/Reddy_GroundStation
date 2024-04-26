@@ -8,9 +8,9 @@ import time
 # SPI is defined by bus ID and cs ID and IO pins defined by chip and offset number
 spi = LoRaSpi(0, 0)
 cs = LoRaGpio(0, 8)
-reset = LoRaGpio(0, 24)
+reset = LoRaGpio(0, 22)
 busy = LoRaGpio(0, 23)
-irq = LoRaGpio(0, 17)
+irq = LoRaGpio(0, 5)
 LoRa = SX126x(spi, cs, reset, busy, irq)
 print("Begin LoRa radio")
 if not LoRa.begin() :
@@ -30,22 +30,22 @@ LoRa.setRxGain(LoRa.RX_GAIN_POWER_SAVING)
 
 # Configure modulation parameter including spreading factor (SF), bandwidth (BW), and coding rate (CR)
 print("Set modulation parameters:\n\tSpreading factor = 7\n\tBandwidth = 125 kHz\n\tCoding rate = 4/5")
-sf = 7
+sf = 12
 bw = 125000
-cr = 5
+cr = 4
 LoRa.setLoRaModulation(sf, bw, cr)
 
 # Configure packet parameter including header type, preamble length, payload length, and CRC type
 print("Set packet parameters:\n\tExplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
 headerType = LoRa.HEADER_EXPLICIT
-preambleLength = 12
-payloadLength = 15
-crcType = True
+preambleLength = 16
+payloadLength = 2
+crcType = False
 LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType)
 
 # Set syncronize word for public network (0x3444)
-print("Set syncronize word to 0x3444")
-LoRa.setSyncWord(0x3444)
+print("Set syncronize word to 0x8888")
+LoRa.setSyncWord(0x8888)
 
 print("\n-- LoRa Receiver Continuous --\n")
 
