@@ -1,8 +1,17 @@
-import os, sys
+import os, sys, struct
+from LoRaRF import SX126x, LoRaSpi, LoRaGpio
 currentdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
-from LoRaRF import SX126x, LoRaSpi, LoRaGpio
-import time
+
+def uint8_to_int(uint1, uint2, uint3, uint4):
+    result = (uint1 << 24) | (uint2 << 16) | (uint3 << 8) | uint4
+    return result
+
+def uint8_to_float(uint1, uint2, uint3, uint4):
+    byte_string = struct.pack('BBBB', uint4, uint3, uint2, uint1)
+    float_value = struct.unpack('f', byte_string)[0]
+    return float_value
+
 
 # Begin LoRa radio with connected SPI bus and IO pins (cs and reset) on GPIO
 # SPI is defined by bus ID and cs ID and IO pins defined by chip and offset number
@@ -44,7 +53,7 @@ LoRa.setLoRaModulation(sf, bw, cr, ldro)
 print("Set packet parameters:\n\tExplicit header type\n\tPreamble length = 12\n\tPayload Length = 15\n\tCRC on")
 headerType = LoRa.HEADER_EXPLICIT
 preambleLength = 0x10
-payloadLength = 0x32
+payloadLength = 0x2C
 crcType = False
 invertIq = False
 LoRa.setLoRaPacket(headerType, preambleLength, payloadLength, crcType, invertIq)
@@ -75,7 +84,24 @@ while True :
         # Print packet/signal status including RSSI, SNR, and signalRSSI
         print("Packet status: RSSI = {0:0.2f} dBm | SNR = {1:0.2f} dB".format(LoRa.packetRssi(), LoRa.snr()))
         print("")
+
         # Show received status in case CRC or header error occur
         status = LoRa.status()
         if status == LoRa.STATUS_CRC_ERR : print("CRC error")
         if status == LoRa.STATUS_HEADER_ERR : print("Packet header error")
+
+        sm = message.split(" ")
+        sm.pop()
+
+        if len(sm) != 44 : continue
+        counter = uint8_to_int(int(sm[0]), int(sm[1]), int(sm[2]), int(sm[3]))
+        accx = uint8_to_float(int(sm[4]), int(sm[5]), int(sm[6]), int(sm[7]))
+        accy = uint8_to_float(int(sm[8]), int(sm[9]), int(sm[10]), int(sm[11]))
+        accz = uint8_to_float(int(sm[12]), int(sm[13]), int(sm[14]), int(sm[15]))
+        gyrox = uint8_to_float(int(sm[16]), int(sm[17]), int(sm[18]), int(sm[19]))
+        gyroy = uint8_to_float(int(sm[20]), int(sm[21]), int(sm[22]), int(sm[23]))
+        gyroz = uint8_to_float(int(sm[24]), int(sm[25]), int(sm[26]), int(sm[27]))
+        magnetox = uint8_to_float(int(sm[28]), int(sm[29]), int(sm[30]), int(sm[31]))
+        magnetoy = uint8_to_float(int(sm[32]), int(sm[33]), int(sm[34]), int(sm[35]))
+        magnetoz = uint8_to_float(int(sm[36]), int(sm[37]), int(sm[38]), int(sm[39]))
+        baro = uint8_to_float(int(sm[40]), int(sm[41]), int(sm[42]), int(sm[43]))
