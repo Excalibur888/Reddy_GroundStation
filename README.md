@@ -1,6 +1,11 @@
 # Install modules
-`pip install websockets`
+`git clone https://github.com/chandrawi/LoRaRF-Python.git && python LoRaRF-Python/setup.py bdist_wheel`
 
-`git clone https://github.com/chandrawi/LoRaRF-Python.git && cd LoRaRF-Python && python setup.py bdist_wheel`
+`pip install LoRaRF-Python/dist/LoRaRF-1.4.0-py3-none-any.whl --break-system-packages`
 
-`pip install dist/LoRaRF-1.3.0-py3-none-any.whl`
+`pip install websockets --break-system-packages`
+
+`pip install gpiod`
+
+# Launch
+`python receiver.py` 

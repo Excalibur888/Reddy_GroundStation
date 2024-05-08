@@ -1,5 +1,8 @@
 import os, sys, struct
+import asyncio
+import websockets
 from LoRaRF import SX126x, LoRaSpi, LoRaGpio
+
 currentdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(currentdir)))
 
@@ -11,6 +14,11 @@ def uint8_to_float(uint1, uint2, uint3, uint4):
     byte_string = struct.pack('BBBB', uint4, uint3, uint2, uint1)
     float_value = struct.unpack('f', byte_string)[0]
     return float_value
+
+async def send_data_to_server(data):
+    uri = "ws://localhost:80"  # WebSocket server URI
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(data)
 
 
 # Begin LoRa radio with connected SPI bus and IO pins (cs and reset) on GPIO
@@ -68,40 +76,52 @@ print("\n-- LoRa Receiver Continuous --\n")
 LoRa.request(LoRa.RX_CONTINUOUS)
 
 # Receive message continuously
-while True :
+async def receive_and_send_data():
+    while True :
 
-    # Check for incoming LoRa packet
-    if LoRa.available() :
+        # Check for incoming LoRa packet
+        if LoRa.available() :
 
-        # Put received packet to message and counter variable
-        message = ""
-        while LoRa.available() > 0 :
-            message += str(LoRa.read()) + " "
+            # Put received packet to message and counter variable
+            message = ""
+            while LoRa.available() > 0 :
+                message += str(LoRa.read()) + " "
 
-        # Print received message and counter in serial
-        print(f"{message}")
+            # Print received message and counter in serial
+            print(f"{message}")
 
-        # Print packet/signal status including RSSI, SNR, and signalRSSI
-        print("Packet status: RSSI = {0:0.2f} dBm | SNR = {1:0.2f} dB".format(LoRa.packetRssi(), LoRa.snr()))
-        print("")
+            # Print packet/signal status including RSSI, SNR, and signalRSSI
+            print("Packet status: RSSI = {0:0.2f} dBm | SNR = {1:0.2f} dB".format(LoRa.packetRssi(), LoRa.snr()))
+            print("")
 
-        # Show received status in case CRC or header error occur
-        status = LoRa.status()
-        if status == LoRa.STATUS_CRC_ERR : print("CRC error")
-        if status == LoRa.STATUS_HEADER_ERR : print("Packet header error")
+            # Show received status in case CRC or header error occur
+            status = LoRa.status()
+            if status == LoRa.STATUS_CRC_ERR : print("CRC error")
+            if status == LoRa.STATUS_HEADER_ERR : print("Packet header error")
 
-        sm = message.split(" ")
-        sm.pop()
+            sm = message.split(" ")
+            sm.pop()
 
-        if len(sm) != 44 : continue
-        counter = uint8_to_int(int(sm[0]), int(sm[1]), int(sm[2]), int(sm[3]))
-        accx = uint8_to_float(int(sm[4]), int(sm[5]), int(sm[6]), int(sm[7]))
-        accy = uint8_to_float(int(sm[8]), int(sm[9]), int(sm[10]), int(sm[11]))
-        accz = uint8_to_float(int(sm[12]), int(sm[13]), int(sm[14]), int(sm[15]))
-        gyrox = uint8_to_float(int(sm[16]), int(sm[17]), int(sm[18]), int(sm[19]))
-        gyroy = uint8_to_float(int(sm[20]), int(sm[21]), int(sm[22]), int(sm[23]))
-        gyroz = uint8_to_float(int(sm[24]), int(sm[25]), int(sm[26]), int(sm[27]))
-        magnetox = uint8_to_float(int(sm[28]), int(sm[29]), int(sm[30]), int(sm[31]))
-        magnetoy = uint8_to_float(int(sm[32]), int(sm[33]), int(sm[34]), int(sm[35]))
-        magnetoz = uint8_to_float(int(sm[36]), int(sm[37]), int(sm[38]), int(sm[39]))
-        baro = uint8_to_float(int(sm[40]), int(sm[41]), int(sm[42]), int(sm[43]))
+            if len(sm) != 44 : continue
+            counter = uint8_to_int(int(sm[0]), int(sm[1]), int(sm[2]), int(sm[3]))
+            accx = uint8_to_float(int(sm[4]), int(sm[5]), int(sm[6]), int(sm[7]))
+            accy = uint8_to_float(int(sm[8]), int(sm[9]), int(sm[10]), int(sm[11]))
+            accz = uint8_to_float(int(sm[12]), int(sm[13]), int(sm[14]), int(sm[15]))
+            gyrox = uint8_to_float(int(sm[16]), int(sm[17]), int(sm[18]), int(sm[19]))
+            gyroy = uint8_to_float(int(sm[20]), int(sm[21]), int(sm[22]), int(sm[23]))
+            gyroz = uint8_to_float(int(sm[24]), int(sm[25]), int(sm[26]), int(sm[27]))
+            magnetox = uint8_to_float(int(sm[28]), int(sm[29]), int(sm[30]), int(sm[31]))
+            magnetoy = uint8_to_float(int(sm[32]), int(sm[33]), int(sm[34]), int(sm[35]))
+            magnetoz = uint8_to_float(int(sm[36]), int(sm[37]), int(sm[38]), int(sm[39]))
+            baro = uint8_to_float(int(sm[40]), int(sm[41]), int(sm[42]), int(sm[43]))
+
+            # Prepare sensor data to send
+            sensor_data = f"Counter: {counter}, AccX: {accx}, AccY: {accy}, AccZ: {accz}, GyroX: {gyrox}, GyroY: {gyroy}, GyroZ: {gyroz}, MagnetX: {magnetox}, MagnetY: {magnetoy}, MagnetZ: {magnetoz}, Baro: {baro}"
+
+            # Print sensor data
+            print("Sending sensor data:", sensor_data)
+
+            # Send sensor data to server via WebSocket
+            await send_data_to_server(sensor_data)
+
+asyncio.run(receive_and_send_data())
